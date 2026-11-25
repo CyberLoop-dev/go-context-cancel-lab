@@ -12,11 +12,14 @@ func contextFor(mode string, d time.Duration) (context.Context, context.CancelFu
 	parent := context.Background()
 	switch mode {
 	case "cancel":
-		return context.WithCancel(parent)
+		ctx, cancel := context.WithCancel(parent)
+		return ctx, cancel, nil
 	case "deadline":
-		return context.WithDeadline(parent, time.Now().Add(d))
+		ctx, cancel := context.WithDeadline(parent, time.Now().Add(d))
+		return ctx, cancel, nil
 	case "timeout":
-		return context.WithTimeout(parent, d)
+		ctx, cancel := context.WithTimeout(parent, d)
+		return ctx, cancel, nil
 	default:
 		return nil, nil, fmt.Errorf("unknown scenario %q", mode)
 	}
@@ -39,7 +42,6 @@ func run(mode string, workers int) error {
 	ctx, cancel, err := contextFor(mode, 65*time.Millisecond)
 	if err != nil { return err }
 	defer cancel()
-
 	var wg sync.WaitGroup
 	for id := 1; id <= workers; id++ {
 		wg.Add(1)
